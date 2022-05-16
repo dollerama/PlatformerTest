@@ -8,6 +8,18 @@ using Platformer.Core;
 
 namespace Platformer.Mechanics
 {
+    [System.Serializable]
+    public class PlayerData
+    {
+        public float highscore;
+
+        public PlayerData()
+        {
+            highscore = 0;
+        }
+    }
+
+
     /// <summary>
     /// This is the main class used to implement control of the player.
     /// It is a superset of the AnimationController class, but is inlined to allow for any kind of customisation.
@@ -52,10 +64,14 @@ namespace Platformer.Mechanics
         public float bestRoundTime = 0f;
         public float instanceDeaths = 0f;
 
+        private PlayerData _data;
+
         private void Start()
         {
             roundTimer = 0;
             instanceDeaths = 0;
+
+            Read();
         }
 
         void Awake()
@@ -67,7 +83,35 @@ namespace Platformer.Mechanics
             animator = GetComponent<Animator>();
         }
 
-        public void ExecuteEvent()
+        void Write()
+        {
+            string saveData = JsonUtility.ToJson(_data);
+            PlayerPrefs.SetString("PlayerData", saveData);
+        }
+
+        void Read()
+        {
+            string defaultData = JsonUtility.ToJson(new PlayerData());
+            string readData = PlayerPrefs.GetString("PlayerData", defaultData);
+            _data = JsonUtility.FromJson<PlayerData>(readData);
+            bestRoundTime = _data.highscore;
+        }
+
+        public bool CheckScoreForUpdate()
+        {
+            if (roundTimer < bestRoundTime || bestRoundTime == 0)
+            {
+                _data.highscore = roundTimer;
+                bestRoundTime = _data.highscore;
+                Write();
+
+                Camera.main.GetComponent<ParticleSystem>().Play();
+                return true;
+            }
+            return false;
+        }
+
+        public void SpawnEvent()
         {
             collider2d.enabled = true;
             controlEnabled = false;
@@ -77,17 +121,25 @@ namespace Platformer.Mechanics
             Teleport(model.spawnPoint.transform.position);
             jumpState = PlayerController.JumpState.Grounded;
             animator.SetBool("dead", false);
-            instanceDeaths++;
             roundTimer = 0;
+        }
+
+        public void DeathEvent()
+        {
+            instanceDeaths++;
+        }
+
+        public bool VictoryEvent()
+        {
+            return CheckScoreForUpdate();
         }
 
         protected override void Update()
         {
-            if (health.IsAlive)
-                roundTimer += Time.deltaTime;
-
             if (controlEnabled)
             {
+                roundTimer += Time.deltaTime;
+
                 move.x = Input.GetAxis("Horizontal");
 
                 if ((jumpState == JumpState.Grounded) && Input.GetButtonDown("Jump"))

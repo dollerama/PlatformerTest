@@ -19,6 +19,16 @@ namespace Platformer.Gameplay
         {
             model.player.animator.SetTrigger("victory");
             model.player.controlEnabled = false;
+
+            //respawn
+            if (model.player.VictoryEvent())
+            {
+                Simulation.Schedule<PlayerDeath>(6);
+            }
+            else
+            {
+                Simulation.Schedule<PlayerDeath>(2);
+            }
         }
     }
 }

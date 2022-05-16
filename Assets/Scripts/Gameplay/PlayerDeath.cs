@@ -19,6 +19,7 @@ namespace Platformer.Gameplay
             var player = model.player;
             if (player.health.IsAlive)
             {
+                if (player.controlEnabled) model.player.DeathEvent();
                 player.health.Die();
                 model.virtualCamera.m_Follow = null;
                 model.virtualCamera.m_LookAt = null;

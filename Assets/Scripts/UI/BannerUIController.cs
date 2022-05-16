@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using Platformer.Mechanics;
+using TMPro;
 public class BannerUIController : UIContentController
 {
     [System.Serializable]
@@ -82,8 +83,9 @@ public class BannerUIController : UIContentController
 
         GameObject deaths = GetItem("Deaths");
         GameObject timer = GetItem("Time");
+        GameObject best = GetItem("Best Time");
 
-        while(!player)
+        while (!player)
         {
             Initialize(true);
             player = GameObject.FindGameObjectWithTag("Player");
@@ -93,13 +95,21 @@ public class BannerUIController : UIContentController
 
         deaths.GetComponent<UIElementController>().CreateBind(g =>
         {
-            g.GetComponent<UIElementController>().GetItem("Value").GetComponent<TMPro.TextMeshProUGUI>().text = player.GetComponent<Platformer.Mechanics.PlayerController>().instanceDeaths.ToString();
+            GameObject value = g.GetComponent<UIElementController>().GetItem("Value");
+            value.GetComponent<TextMeshProUGUI>().text = player.GetComponent<PlayerController>().instanceDeaths.ToString();
         });
 
         timer.GetComponent<UIElementController>().CreateBind(g =>
         {
-            string time = FormatTime(player.GetComponent<Platformer.Mechanics.PlayerController>().roundTimer);
-            g.GetComponent<UIElementController>().GetItem("Value").GetComponent<TMPro.TextMeshProUGUI>().text = time;
+            string time = FormatTime(player.GetComponent<PlayerController>().roundTimer);
+            GameObject value = g.GetComponent<UIElementController>().GetItem("Value");
+            value.GetComponent<TextMeshProUGUI>().text = time;
+        });
+
+        best.GetComponent<UIElementController>().CreateBind(g =>
+        {
+            string best = FormatTime(player.GetComponent<PlayerController>().bestRoundTime);
+            g.GetComponent<UIElementController>().GetItem("Value").GetComponent<TextMeshProUGUI>().text = best;
         });
 
     }

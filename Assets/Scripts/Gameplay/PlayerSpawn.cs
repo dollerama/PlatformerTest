@@ -13,7 +13,7 @@ namespace Platformer.Gameplay
 
         public override void Execute()
         {
-            model.player.ExecuteEvent();
+            model.player.SpawnEvent();
             model.virtualCamera.m_Follow = model.player.transform;
             model.virtualCamera.m_LookAt = model.player.transform;
             Simulation.Schedule<EnablePlayerInput>(2f);
