@@ -27,6 +27,12 @@ namespace Platformer.Mechanics
         /// </summary>
         public float jumpTakeOffSpeed = 7;
 
+        /// <summary>
+        /// Period of time where player may jump still while being "ungrounded"
+        /// </summary>
+        public float jumpGracePeriod = 0.2f;
+        private float jumpGracePeriodTimer = 0;
+
         public JumpState jumpState = JumpState.Grounded;
         private bool stopJump;
         /*internal new*/ public Collider2D collider2d;
@@ -42,6 +48,16 @@ namespace Platformer.Mechanics
 
         public Bounds Bounds => collider2d.bounds;
 
+        public float roundTimer = 0f;
+        public float bestRoundTime = 0f;
+        public float instanceDeaths = 0f;
+
+        private void Start()
+        {
+            roundTimer = 0;
+            instanceDeaths = 0;
+        }
+
         void Awake()
         {
             health = GetComponent<Health>();
@@ -51,12 +67,30 @@ namespace Platformer.Mechanics
             animator = GetComponent<Animator>();
         }
 
+        public void ExecuteEvent()
+        {
+            collider2d.enabled = true;
+            controlEnabled = false;
+            if (audioSource && respawnAudio)
+                audioSource.PlayOneShot(respawnAudio);
+            health.Increment();
+            Teleport(model.spawnPoint.transform.position);
+            jumpState = PlayerController.JumpState.Grounded;
+            animator.SetBool("dead", false);
+            instanceDeaths++;
+            roundTimer = 0;
+        }
+
         protected override void Update()
         {
+            if (health.IsAlive)
+                roundTimer += Time.deltaTime;
+
             if (controlEnabled)
             {
                 move.x = Input.GetAxis("Horizontal");
-                if (jumpState == JumpState.Grounded && Input.GetButtonDown("Jump"))
+
+                if ((jumpState == JumpState.Grounded) && Input.GetButtonDown("Jump"))
                     jumpState = JumpState.PrepareToJump;
                 else if (Input.GetButtonUp("Jump"))
                 {
@@ -69,11 +103,15 @@ namespace Platformer.Mechanics
                 move.x = 0;
             }
             UpdateJumpState();
+
             base.Update();
         }
 
         void UpdateJumpState()
         {
+            //if grounded we'll start our timer otherwise reset to 0
+            jumpGracePeriodTimer = (IsGrounded) ? jumpGracePeriodTimer + Time.deltaTime : 0;
+
             jump = false;
             switch (jumpState)
             {
@@ -104,7 +142,12 @@ namespace Platformer.Mechanics
 
         protected override void ComputeVelocity()
         {
-            if (jump && IsGrounded)
+            //check if within grace period
+            bool inGracePeriod = (jumpGracePeriodTimer <= jumpGracePeriod);
+            //check if player is grounded or ungrounded and within our grace period.
+            bool canJumpThisFrame = (IsGrounded) || (inGracePeriod && jumpState != JumpState.PrepareToJump);
+            
+            if (jump && canJumpThisFrame)
             {
                 velocity.y = jumpTakeOffSpeed * model.jumpModifier;
                 jump = false;
