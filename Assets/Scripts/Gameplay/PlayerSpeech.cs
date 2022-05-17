@@ -10,6 +10,8 @@ public class PlayerSpeech : MonoBehaviour
     public int assetIndex;
     public List<string> wordsInUse;
 
+    public float bubbleOffset = 122.78f;
+
     public float showTimeMax;
     private float showTimer;
 
@@ -29,11 +31,20 @@ public class PlayerSpeech : MonoBehaviour
         if (showTimer > 0)
         {
             showTimer -= Time.deltaTime;
-            speechBubbleC.GetComponent<RectTransform>().localScale = Vector3.MoveTowards(speechBubbleC.GetComponent<RectTransform>().localScale, Vector3.one, Time.deltaTime * 5);
+            Vector3 toScale = speechBubbleC.GetComponent<RectTransform>().localScale;
+            speechBubbleC.GetComponent<RectTransform>().localScale = Vector3.MoveTowards(toScale, Vector3.one, Time.deltaTime * 5);
+            Vector3 pos = speechBubbleC.GetComponent<RectTransform>().position;
+            Vector3 playerToScreen = Camera.main.WorldToScreenPoint(transform.position);
+            playerToScreen.y = bubbleOffset; playerToScreen.z = pos.z;
+            speechBubbleC.GetComponent<RectTransform>().position = playerToScreen;
         }
         else
         {
-            speechBubbleC.GetComponent<RectTransform>().localScale = Vector3.MoveTowards(speechBubbleC.GetComponent<RectTransform>().localScale, Vector3.zero, Time.deltaTime * 5);
+            Vector3 toScale = speechBubbleC.GetComponent<RectTransform>().localScale;
+            speechBubbleC.GetComponent<RectTransform>().localScale = Vector3.MoveTowards(toScale, Vector3.zero, Time.deltaTime*5);
+            Vector3 pos = speechBubbleC.GetComponent<RectTransform>().position;
+            Vector3 playerToScreen = Camera.main.WorldToScreenPoint(transform.position);
+            speechBubbleC.GetComponent<RectTransform>().position = Vector3.MoveTowards(pos, playerToScreen, Time.deltaTime*500);
         }
     }
 

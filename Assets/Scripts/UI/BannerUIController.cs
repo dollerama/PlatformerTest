@@ -64,11 +64,6 @@ public class BannerUIController : UIContentController
 
     public override void BuildContent()
     {
-        StartCoroutine(CbuildContent());
-    }
-
-    IEnumerator CbuildContent()
-    {
         List<GameObject> added = new List<GameObject>();
         for (int i = 0; i < bannerInfo.Count; i++)
         {
@@ -83,21 +78,12 @@ public class BannerUIController : UIContentController
             SetPrefabInfo(added[i], new object[] { details.title, details.value });
         }
 
-        yield return new WaitForEndOfFrame();
         Initialize(true);
 
         GameObject deaths = GetItem("Deaths");
         GameObject timer = GetItem("Time");
         GameObject best = GetItem("Best Times");
         GameObject title = GetItem("GRAMMAR BOY!");
-
-        while (!player)
-        {
-            Initialize(true);
-            player = GameObject.FindGameObjectWithTag("Player");
-
-            yield return new WaitForEndOfFrame();
-        }
 
         deaths.GetComponent<UIElementController>().CreateBind(g =>
         {
