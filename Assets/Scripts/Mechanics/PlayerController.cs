@@ -69,7 +69,8 @@ namespace Platformer.Mechanics
         /// Period of time where player may jump still while being "ungrounded"
         /// </summary>
         public float jumpGracePeriod = 0.2f;
-        private float jumpGracePeriodTimer = 0;
+        [SerializeField] private float jumpGracePeriodTimer = 0;
+        private bool jumpGraceTrigger = false;
 
         public JumpState jumpState = JumpState.Grounded;
         private bool stopJump;
@@ -172,7 +173,6 @@ namespace Platformer.Mechanics
 
             //reset round data
             roundTimer = 0;
-            instanceDeaths = 0;
 
             WriteData();
         }
@@ -192,6 +192,9 @@ namespace Platformer.Mechanics
         //called by PlayerEnteredVictoryZone Event
         public bool VictoryEvent()
         {
+            //reset deaths
+            instanceDeaths = 0;
+
             //check if the player surpassed their highscore
             bool gotHigh = CheckScoreForUpdate();
             WriteData();
@@ -226,8 +229,15 @@ namespace Platformer.Mechanics
 
         void UpdateJumpState()
         {
-            //if grounded we'll start our timer otherwise reset to 0
-            jumpGracePeriodTimer = (IsGrounded) ? jumpGracePeriodTimer + Time.deltaTime : 0;
+            
+            if (!IsGrounded && jumpGracePeriodTimer > jumpGracePeriod-Time.deltaTime && !jumpGraceTrigger)
+            {
+                jumpGraceTrigger = true;
+                gameObject.GetComponentInChildren<ParticleSystem>().Emit(Random.Range(8, 16));
+            }
+
+            //if not grounded we'll start our timer
+            jumpGracePeriodTimer = (!IsGrounded) ? jumpGracePeriodTimer + Time.deltaTime : 0;
 
             jump = false;
             switch (jumpState)
@@ -253,6 +263,8 @@ namespace Platformer.Mechanics
                     break;
                 case JumpState.Landed:
                     jumpState = JumpState.Grounded;
+                    jumpGracePeriodTimer = 0;
+                    jumpGraceTrigger = false;
                     break;
             }
         }
