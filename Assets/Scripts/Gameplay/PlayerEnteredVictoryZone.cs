@@ -1,6 +1,7 @@
 using Platformer.Core;
 using Platformer.Mechanics;
 using Platformer.Model;
+using UnityEngine;
 
 namespace Platformer.Gameplay
 {
@@ -23,6 +24,7 @@ namespace Platformer.Gameplay
             //respawn
             if (model.player.VictoryEvent())
             {
+                Camera.main.GetComponent<ParticleSystem>().Play();
                 Simulation.Schedule<PlayerDeath>(6);
             }
             else

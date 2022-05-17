@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using Platformer.Mechanics;
 using TMPro;
+using System.Text;
+using UnityEngine.UI;
+
 public class BannerUIController : UIContentController
 {
     [System.Serializable]
@@ -20,6 +23,7 @@ public class BannerUIController : UIContentController
 
     public List<info> bannerInfo;
     public GameObject player;
+    private StringBuilder highscoreText;
 
     string FormatTime(float time)
     {
@@ -52,6 +56,7 @@ public class BannerUIController : UIContentController
     // Start is called before the first frame update
     void Start()
     {
+        highscoreText = new StringBuilder();
         player = GameObject.Find("Player");
         if (bannerInfo.Count == 0) bannerInfo = new List<info>();
         BuildContent();
@@ -83,7 +88,8 @@ public class BannerUIController : UIContentController
 
         GameObject deaths = GetItem("Deaths");
         GameObject timer = GetItem("Time");
-        GameObject best = GetItem("Best Time");
+        GameObject best = GetItem("Best Times");
+        GameObject title = GetItem("GRAMMAR BOY!");
 
         while (!player)
         {
@@ -96,7 +102,8 @@ public class BannerUIController : UIContentController
         deaths.GetComponent<UIElementController>().CreateBind(g =>
         {
             GameObject value = g.GetComponent<UIElementController>().GetItem("Value");
-            value.GetComponent<TextMeshProUGUI>().text = player.GetComponent<PlayerController>().instanceDeaths.ToString();
+            string text = player.GetComponent<PlayerController>().instanceDeaths.ToString();
+            value.GetComponent<TextMeshProUGUI>().text = text;
         });
 
         timer.GetComponent<UIElementController>().CreateBind(g =>
@@ -108,9 +115,28 @@ public class BannerUIController : UIContentController
 
         best.GetComponent<UIElementController>().CreateBind(g =>
         {
-            string best = FormatTime(player.GetComponent<PlayerController>().bestRoundTime);
-            g.GetComponent<UIElementController>().GetItem("Value").GetComponent<TextMeshProUGUI>().text = best;
+            List<float> scores = player.GetComponent<PlayerController>().GetHighscores();
+            highscoreText.Clear();
+            for(int i = 0; i < scores.Count; i++)
+                highscoreText.Append($"{i+1}) {FormatTime(scores[i])}\n");
+
+            GameObject value = g.GetComponent<UIElementController>().GetItem("Value");
+            value.GetComponent<TextMeshProUGUI>().text = highscoreText.ToString();
         });
 
+        title.GetComponent<UIElementController>().CreateBind(g =>
+        {
+            GameObject value = g.GetComponent<UIElementController>().GetItem("Title");
+            if (player.GetComponent<PlayerSpeech>().GetLang() == "English")
+                value.GetComponent<TextMeshProUGUI>().text = "GRAMMAR BOY!";
+            else
+                value.GetComponent<TextMeshProUGUI>().text = "¡EL NIÑO GRAMÁTICO!";
+        });
+
+        GameObject langToggle = InstantiatePrefabInContent("pf_LangToggle");
+        langToggle.GetComponent<Button>().onClick.AddListener(() => {
+            player.GetComponent<PlayerSpeech>().ToggleAsset();
+            langToggle.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = player.GetComponent<PlayerSpeech>().GetLang();
+        });
     }
 }

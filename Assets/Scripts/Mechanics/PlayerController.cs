@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Platformer.Gameplay;
 using static Platformer.Core.Simulation;
@@ -11,11 +12,31 @@ namespace Platformer.Mechanics
     [System.Serializable]
     public class PlayerData
     {
-        public float highscore;
+        public List<float> highscores;
 
         public PlayerData()
         {
-            highscore = 0;
+            highscores = new List<float>();
+            for (int i = 0; i < 5; i++) highscores.Add(0);
+        }
+
+        public void AddScore(float score)
+        {
+            highscores.Add(score);
+            Sort();
+            Trim(5);
+        }
+
+        public void Sort()
+        {
+            highscores = highscores.OrderBy(x => x == 0).ThenBy(x => x).ToList();
+
+        }
+
+        //trim list to the amount highscores we want to track
+        public void Trim(int amount)
+        {
+            highscores.RemoveRange(amount, (highscores.Count)-amount);
         }
     }
 
@@ -94,20 +115,21 @@ namespace Platformer.Mechanics
             string defaultData = JsonUtility.ToJson(new PlayerData());
             string readData = PlayerPrefs.GetString("PlayerData", defaultData);
             _data = JsonUtility.FromJson<PlayerData>(readData);
-            bestRoundTime = _data.highscore;
+            bestRoundTime = _data.highscores[0];
         }
+
+        public List<float> GetHighscores() => _data.highscores;
 
         public bool CheckScoreForUpdate()
         {
+            _data.AddScore(roundTimer);
+
             if (roundTimer < bestRoundTime || bestRoundTime == 0)
             {
-                _data.highscore = roundTimer;
-                bestRoundTime = _data.highscore;
-                Write();
-
-                Camera.main.GetComponent<ParticleSystem>().Play();
+                bestRoundTime = _data.highscores[0];
                 return true;
             }
+
             return false;
         }
 
@@ -122,16 +144,22 @@ namespace Platformer.Mechanics
             jumpState = PlayerController.JumpState.Grounded;
             animator.SetBool("dead", false);
             roundTimer = 0;
+
+            Write();
         }
 
         public void DeathEvent()
         {
             instanceDeaths++;
+
+            Write();
         }
 
         public bool VictoryEvent()
         {
-            return CheckScoreForUpdate();
+            bool gotHigh = CheckScoreForUpdate();
+            Write();
+            return gotHigh;
         }
 
         protected override void Update()
