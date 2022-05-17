@@ -169,7 +169,10 @@ namespace Platformer.Mechanics
             Teleport(model.spawnPoint.transform.position);
             jumpState = PlayerController.JumpState.Grounded;
             animator.SetBool("dead", false);
+
+            //reset round data
             roundTimer = 0;
+            instanceDeaths = 0;
 
             WriteData();
         }
