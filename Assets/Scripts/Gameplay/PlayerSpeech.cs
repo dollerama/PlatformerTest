@@ -26,6 +26,7 @@ public class PlayerSpeech : MonoBehaviour
     private void Awake()
     {
         wordsInUse = new List<string>();
+        assetIndex = 0;
         //pre-load words
         LoadContent();
     }
@@ -67,10 +68,11 @@ public class PlayerSpeech : MonoBehaviour
 
     public IEnumerator LoadContentC()
     {
-        if (loadingContent) yield return null;
+        yield return new WaitUntil(() => !loadingContent);
         loadingContent = true;
         //parse file and add to list for easy access
         wordsInUse.Clear();
+        yield return new WaitForEndOfFrame();
         string[] textSplit = adjectiveAssets[assetIndex].text.Split('\n');
         for(int i=0; i < textSplit.Length-1; i++)
         {
@@ -88,11 +90,6 @@ public class PlayerSpeech : MonoBehaviour
     public string GetLang()
     {
         return (assetIndex == 0) ? "English" : "Spanish";
-    }
-
-    public string GetToggleLang()
-    {
-        return (assetIndex == 1) ? "English" : "Spanish";
     }
 
     public void SwitchAsset(int newIndex)
