@@ -1,4 +1,0 @@
-# PlatformerTest
-
-Class ChangeLog -
-  + PlayerController
