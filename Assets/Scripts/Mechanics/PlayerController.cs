@@ -229,8 +229,9 @@ namespace Platformer.Mechanics
 
         void UpdateJumpState()
         {
-            
-            if (!IsGrounded && jumpGracePeriodTimer > jumpGracePeriod-Time.deltaTime && !jumpGraceTrigger)
+            //trigger vfx after grace has been exceeded to hint to player at the underlying mechanic
+            bool withinGrace = jumpGracePeriodTimer > jumpGracePeriod - Time.deltaTime;
+            if (!IsGrounded && withinGrace && !jumpGraceTrigger && jumpState != JumpState.Jumping)
             {
                 jumpGraceTrigger = true;
                 gameObject.GetComponentInChildren<ParticleSystem>().Emit(Random.Range(8, 16));
