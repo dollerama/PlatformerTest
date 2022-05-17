@@ -24,11 +24,13 @@ namespace Platformer.Gameplay
             //respawn
             if (model.player.VictoryEvent())
             {
+                //if highscore was beat we will trigger our effect and schedule respawn for when the effect has dissipated
                 Camera.main.GetComponent<ParticleSystem>().Play();
                 Simulation.Schedule<PlayerDeath>(6);
             }
             else
             {
+                //otherwise normal respawn
                 Simulation.Schedule<PlayerDeath>(2);
             }
         }

@@ -9,6 +9,7 @@ using Platformer.Core;
 
 namespace Platformer.Mechanics
 {
+    //player data class will be converted to JSON when saved
     [System.Serializable]
     public class PlayerData
     {
@@ -22,15 +23,19 @@ namespace Platformer.Mechanics
 
         public void AddScore(float score)
         {
+            //add score to list
             highscores.Add(score);
+            //sort
             Sort();
+            //trim to the desired depth
             Trim(5);
         }
 
         public void Sort()
         {
+            //we use linq here instead of a normal sort because default times im using are just 0.
+            //the expression sorts from lowest to highest time and places zeroed out times at the end.
             highscores = highscores.OrderBy(x => x == 0).ThenBy(x => x).ToList();
-
         }
 
         //trim list to the amount highscores we want to track
@@ -81,18 +86,24 @@ namespace Platformer.Mechanics
 
         public Bounds Bounds => collider2d.bounds;
 
+        //round timer and current best time
+        //bestRoundTime will be set in ReadData to the current best
         public float roundTimer = 0f;
         public float bestRoundTime = 0f;
+
+        //deaths this round
         public float instanceDeaths = 0f;
 
+        //player save data
         private PlayerData _data;
 
         private void Start()
         {
+            //init counters/times
             roundTimer = 0;
             instanceDeaths = 0;
-
-            Read();
+            //read data
+            ReadData();
         }
 
         void Awake()
@@ -104,61 +115,83 @@ namespace Platformer.Mechanics
             animator = GetComponent<Animator>();
         }
 
-        void Write()
+        void WriteData()
         {
+            //seralize to json
             string saveData = JsonUtility.ToJson(_data);
+            //save in slot
             PlayerPrefs.SetString("PlayerData", saveData);
         }
 
-        void Read()
+        void ReadData()
         {
+            //seralize default data
             string defaultData = JsonUtility.ToJson(new PlayerData());
+            //read data from slot
             string readData = PlayerPrefs.GetString("PlayerData", defaultData);
+            //set data
             _data = JsonUtility.FromJson<PlayerData>(readData);
+            //set best time.
             bestRoundTime = _data.highscores[0];
         }
 
+        //get score list
         public List<float> GetHighscores() => _data.highscores;
 
-        public bool CheckScoreForUpdate()
+        //used by VictoryEvent()
+        private bool CheckScoreForUpdate()
         {
+            //add curent score
             _data.AddScore(roundTimer);
 
             if (roundTimer < bestRoundTime || bestRoundTime == 0)
             {
+                //beat score
                 bestRoundTime = _data.highscores[0];
                 return true;
             }
 
+            //no highscore
             return false;
         }
 
+        //used in PlayerSpawn
         public void SpawnEvent()
         {
             collider2d.enabled = true;
             controlEnabled = false;
+
             if (audioSource && respawnAudio)
                 audioSource.PlayOneShot(respawnAudio);
+
             health.Increment();
+
             Teleport(model.spawnPoint.transform.position);
             jumpState = PlayerController.JumpState.Grounded;
             animator.SetBool("dead", false);
             roundTimer = 0;
 
-            Write();
+            WriteData();
         }
 
+        //called by PlayerDeath Event
         public void DeathEvent()
         {
-            instanceDeaths++;
+            //Im using the death event to respawn the player because the animation for death fits a restart animation as well.
+            //control will be disabled at this point already because of the player finish event.
+            //this check makes sure that its a death and not a restart that is being counted.
+            if(controlEnabled)
+                instanceDeaths++;
 
-            Write();
+            WriteData();
         }
 
+        //called by PlayerEnteredVictoryZone Event
         public bool VictoryEvent()
         {
+            //check if the player surpassed their highscore
             bool gotHigh = CheckScoreForUpdate();
-            Write();
+            WriteData();
             return gotHigh;
         }
 
@@ -166,6 +199,7 @@ namespace Platformer.Mechanics
         {
             if (controlEnabled)
             {
+                //increment timer only if player has control
                 roundTimer += Time.deltaTime;
 
                 move.x = Input.GetAxis("Horizontal");

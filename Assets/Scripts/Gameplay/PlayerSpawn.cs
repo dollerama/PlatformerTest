@@ -13,6 +13,7 @@ namespace Platformer.Gameplay
 
         public override void Execute()
         {
+            //call player spawn method
             model.player.SpawnEvent();
             model.virtualCamera.m_Follow = model.player.transform;
             model.virtualCamera.m_LookAt = model.player.transform;
